@@ -1,0 +1,40 @@
+name: 每日股票分析
+
+on:
+  schedule:
+    - cron: '0 10 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      stocks:
+        description: '临时分析指定股票（可选，逗号分隔）'
+        required: false
+        type: string
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 安装依赖
+        run: |
+          pip install -r requirements.txt
+
+      - name: 执行股票分析
+        env:
+          STOCK_LIST: ${{ secrets.STOCK_LIST }}
+          WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "${{ inputs.stocks }}" ]; then
+            python main.py --stocks ${{ inputs.stocks }}
+          else
+            python main.py
+          fi
